@@ -58,6 +58,9 @@ add_executable(OnlineRindex_Demo OnlineRindex_Demo.cpp)
 target_link_libraries(OnlineRindex_Demo Basics)
 target_link_libraries(OnlineRindex_Demo BTree)
 
+add_executable(osptBWT osptBWT.cpp)
+target_link_libraries(osptBWT Basics)
+target_link_libraries(osptBWT BTree)
 
 
 #### TEST
