@@ -1,14 +1,13 @@
-OnlineRLBWT:
+osptBWT:
 ===============
-Author: Tomohiro I
 
 ### Download
 
 The source codes in 'module' directory are maintained in different repositories.
 So, to download all the necessary source codes, do the following:
 ```sh
-git clone https://github.com/itomomoti/OnlineRlbwt.git
-cd OnlineRlbwt
+git clone https://github.com/xiaoYu0103/osptBWT.git
+cd osptBWT
 git submodule init
 git submodule update
 ```
@@ -37,5 +36,6 @@ Executables (without option shows help).
 ./OnlineRindex_Demo
 ./OnlineLz77ViaRlbwt
 ./DecompressLz77
+./osptBWT
 ```
 

@@ -1,3 +1,17 @@
+/*!
+ * Copyright (c) 2025 Xinwu Yu
+ *
+ *
+ * This program is released under the MIT License.
+ * http://opensource.org/licenses/mit-license.php
+ */
+/*!
+ * @file osptBWT.hpp
+ * @brief Compute osptBWT.
+ * @author Xinwu Yu
+ * @date 2025-2-14
+ */
+
 #include <stdint.h>
 
 #include <time.h>
