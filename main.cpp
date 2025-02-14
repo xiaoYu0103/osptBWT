@@ -1,7 +1,72 @@
-#include "OnlineRlbwt.hpp" // 确保路径正确
+#include <stdint.h>
 
-int main()
+#include <time.h>
+#include <iostream>
+#include <iomanip>
+#include <chrono>
+#include <sys/resource.h>
+#include <sys/time.h>
+
+#include "cmdline.h"
+#include "OnlineRlbwt.hpp"
+#include "DynRleForRlbwt.hpp"
+#include "OsptBWT.hpp"
+#include "IOutils.hpp"
+
+using SizeT = uint64_t;
+
+int main(int argc, char *argv[])
 {
-    // 使用 OnlineRlbwt 提供的功能
-    return 0;
+
+    cmdline::parser parser;
+    parser.add<std::string>("input", 'i', "input file name", true);
+    parser.add<std::string>("output", 'o', "output file name BWT", false);
+
+    parser.parse_check(argc, argv);
+    const std::string in = parser.get<std::string>("input");
+    const std::string out = parser.get<std::string>("output");
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+
+    using BTreeNodeT = itmmti::BTreeNode<32>;
+    using BtmNodeMT = itmmti::BtmNodeM_StepCode<BTreeNodeT, 32>;
+    using BtmMInfoT = itmmti::BtmMInfo_BlockVec<BtmNodeMT, 512>;
+    using BtmNodeST = itmmti::BtmNodeS<BTreeNodeT, uint32_t, 8>;
+    using BtmSInfoT = itmmti::BtmSInfo_BlockVec<BtmNodeST, 1024>;
+    using RynRleT = itmmti::DynRleForRlbwt<itmmti::WBitsBlockVec<1024>, itmmti::Samples_Null, BtmMInfoT, BtmSInfoT>;
+    itmmti::OsptBWT<RynRleT> osptBWT(1);
+
+    std::vector<char> Text;
+    uint64_t n = 0, ns = 0;
+
+    load_fasta(in, Text, n, ns);
+    auto start = std::chrono::steady_clock::now();
+    uint64_t cur_ns, cur_n = 0;
+    // std::cout << cur_ns;
+    for (unsigned char c : Text)
+    {
+        osptBWT.sptExtend(uint8_t(c));
+        cur_n++;
+        if (c == '\x01')
+        {
+            cur_ns++;
+            // std::cout << cur_ns;
+            if (cur_ns % 10000 == 0)
+            {
+                auto end = std::chrono::steady_clock::now();
+                std::cout << "===================extend over=======================" << std::endl;
+                std::cout << "cur_ns:" << cur_ns << "  cur_n:" << cur_n << std::endl;
+                std::cout << "Elapsed time in seconds: "
+                          << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
+                          << " milliseconds" << std::endl;
+            }
+        }
+    }
+    auto end = std::chrono::steady_clock::now();
+    std::cout << "===================extend over=======================" << std::endl;
+    std::cout << "cur_ns:" << cur_ns << "  cur_n:" << cur_n << std::endl;
+    std::cout << "Elapsed time in seconds: "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
+              << " milliseconds" << std::endl;
+    osptBWT.printStatistics(std::cout, true);
 }
