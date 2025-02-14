@@ -1,0 +1,3 @@
+[submodule "OnlineRlbwt"]
+	path = OnlineRlbwt
+	url = https://github.com/itomomoti/OnlineRlbwt.git
