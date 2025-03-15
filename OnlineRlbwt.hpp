@@ -50,7 +50,7 @@ namespace itmmti
     public:
         OnlineRlbwt(
             const size_t initNumBtms, //!< Initial size of DynRle to reserve.
-            CharT em = 1              //!< End marker (default UINT64_MAX).
+            CharT em = 0              //!< End marker (default UINT64_MAX).
             ) : drle_(initNumBtms, 0),
                 emPos_(0),
                 em_(em)
@@ -82,6 +82,11 @@ namespace itmmti
         uint64_t getLenWithEndmarker() const noexcept
         {
             return drle_.getSumOfWeight() + 1; // +1 for end marker, which is not in drle_.
+        }
+
+        uint64_t getLenWithOutEndmarker() const noexcept
+        {
+            return drle_.getSumOfWeight();
         }
 
         /*!
@@ -212,7 +217,7 @@ namespace itmmti
         {
             assert(i < getLenWithEndmarker());
 
-            i -= (i > emPos_);
+            // i -= (i > emPos_);
             const uint64_t idxM = drle_.searchPosM(i);
             const auto ch = drle_.getCharFromIdxM(idxM);
             return drle_.rank(ch, idxM, i, true);
@@ -278,9 +283,9 @@ namespace itmmti
             std::cout << std::endl;
         }
 
-        void writeBWT(std::ofstream &ofs)
+        void writeBWT(std::ostream &os)
         {
-            this->drle_.printString(ofs);
+            this->drle_.printString(os);
         }
 
         bool checkDecompress(
@@ -309,6 +314,45 @@ namespace itmmti
                 pos = drle_.rank(ch, idxM, pos, true);
             }
             return true;
+        }
+
+        std::string decompressOsptBWT()
+        {
+            std::string originStr;
+            uint64_t pos = 0;
+
+            for (uint64_t i = 0; i < this->getLenWithOutEndmarker(); ++i)
+            {
+                uint64_t tmp = i;
+                const uint64_t idxM = drle_.searchPosM(tmp);
+                const auto ch = static_cast<unsigned char>(drle_.getCharFromIdxM(idxM));
+                if (ch == em_)
+                {
+                    std::string subStr;
+                    subStr += '$';
+                    // std::cout << i << std::endl;
+                    // std::cout << idxM << "----" << tmp;
+                    tmp = drle_.rank(ch, idxM, tmp, true) - 1;
+                    // std::cout << tmp << "----" << ch << std::endl;
+                    uint64_t idxM = drle_.searchPosM(tmp);
+                    auto ch = static_cast<unsigned char>(drle_.getCharFromIdxM(idxM));
+                    // std::cout << ch << idxM << tmp;
+
+                    while (ch != em_)
+                    {
+                        subStr += ch;
+                        tmp = drle_.rank(ch, idxM, tmp, true) - 1;
+                        idxM = drle_.searchPosM(tmp);
+                        ch = static_cast<unsigned char>(drle_.getCharFromIdxM(idxM));
+                    }
+                    // 反转子串（使其头部插入的效果）
+                    std::reverse(subStr.begin(), subStr.end());
+
+                    // 将子串合并到主字符串
+                    originStr += subStr;
+                }
+            }
+            return originStr;
         }
     };
 };

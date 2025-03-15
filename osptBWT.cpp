@@ -27,6 +27,7 @@
 #include "IOutils.hpp"
 
 using namespace itmmti;
+using namespace std;
 using SizeT = uint64_t;
 
 int main(int argc, char *argv[])
@@ -53,7 +54,20 @@ int main(int argc, char *argv[])
     std::vector<char> Text;
     uint64_t n = 0, ns = 0;
 
-    load_fasta(in, Text, n, ns);
+    load_fasta_reverse(in, Text, n, ns);
+    // 方法 2：逐个字符输出（可控制格式）
+    for (char c : Text)
+    {
+        if (c == '\x00')
+        {
+            std::cout << '$';
+        }
+        else
+        {
+            std::cout << c;
+        }
+    }
+    std::cout << std::endl; // 添加换行
     auto start = std::chrono::steady_clock::now();
     uint64_t cur_ns, cur_n = 0;
     // std::cout << cur_ns;
@@ -61,7 +75,7 @@ int main(int argc, char *argv[])
     {
         rlbwt.sptExtend(uint8_t(c));
         cur_n++;
-        if (c == '\x01')
+        if (c == '\x00')
         {
             cur_ns++;
             // std::cout << cur_ns;
@@ -86,15 +100,16 @@ int main(int argc, char *argv[])
               << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
               << " milliseconds" << std::endl;
     rlbwt.printStatistics(std::cout, true);
-    // 判断输出文件是否被提供
-    if (!(out.empty()))
-    {
-        std::ofstream ofs(out, std::ios::out);
-        rlbwt.sptExtend(0);
-        // rlbwt.printDetailInfo();
-        rlbwt.writeBWT(ofs);
-        auto t2 = std::chrono::high_resolution_clock::now();
-        double sec = std::chrono::duration_cast<std::chrono::seconds>(t2 - t1).count();
-        std::cout << "RLBWT write done. " << sec << " sec" << std::endl;
-    }
+
+    std::ostringstream oss;
+    rlbwt.writeBWT(oss);
+    std::string osptBWT = oss.str();
+
+    std::string deCodeStr = rlbwt.decompressOsptBWT();
+    std::vector<std::string> deCodeStrs1 = split(deCodeStr, '$');
+
+    load_fasta(in, Text, n);
+    std::string inputStr(Text.begin(), Text.end());
+    std::vector<std::string> deCodeStrs2 = split(inputStr, '\x00');
+    std::cout << check(deCodeStrs1, deCodeStrs2) << std::endl;
 }
